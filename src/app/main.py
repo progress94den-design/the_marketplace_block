@@ -1,0 +1,19 @@
+import uvicorn
+from fastapi import FastAPI
+
+from app.api.router import api_router
+
+main_api_router = FastAPI(title="The Marketplace Blog")
+
+main_api_router.include_router(api_router, prefix="/api/v1", tags=["/api/v1"])
+
+
+@main_api_router.get("/ping")
+def ping():
+    return {"status": "ok"}
+
+
+if __name__ == "__main__":
+    # run app on the host and port
+    uvicorn.run(main_api_router, host="localhost", port=8000)
+    # uvicorn.run("main:app", host="0.0.0.0", port=8010)
