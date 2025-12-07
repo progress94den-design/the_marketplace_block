@@ -1,27 +1,15 @@
-from passlib.context import CryptContext
 from sqlalchemy import select
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.app.db.models.user import User
 from src.app.schemas.user import UserCreate, ShowUser
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
-
-
-def verify_password(password: str, hashed: str) -> bool:
-    return pwd_context.verify(password, hashed)
+from src.app.brokers.producer import send_registration_email
 
 
 class UserService:
     @staticmethod
     async def create_user(data: UserCreate, db_session: AsyncSession) -> ShowUser:
-        # hashed_pwd = hash_password(data.password)
-
         new_user = User(
             email=data.email,
             # hashed_password=hashed_pwd,
@@ -33,7 +21,12 @@ class UserService:
         db_session.add(new_user)
         await db_session.commit()
         await db_session.refresh(new_user)
-        # return new_user
+
+        await send_registration_email(
+            email=new_user.email,
+            name=new_user.name
+        )
+
         return ShowUser(
             user_id=new_user.user_id,
             email=new_user.email,

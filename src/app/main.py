@@ -1,7 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 
-from app.api.router import api_router
+from src.app.api.router import api_router
 
 main_api_router = FastAPI(title="The Marketplace Blog")
 
