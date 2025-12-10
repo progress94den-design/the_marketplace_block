@@ -16,3 +16,4 @@ class User(Base):
     phone_number = Column(String(32), unique=True, nullable=False)
     name = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True)
+    # hashed_refresh_token = Column(String, nullable=True)

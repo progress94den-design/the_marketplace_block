@@ -31,3 +31,8 @@ class UserCreate(BaseModel):
         if not re.match(PHONE_PATTERN, values):
             raise ValueError("Invalid phone number. The phone number must be in the format +7(999)1234567")
         return values
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
