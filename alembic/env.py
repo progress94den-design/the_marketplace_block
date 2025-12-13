@@ -13,6 +13,8 @@ from alembic import context
 
 from src.app.db.config import settings
 from src.app.db.models.user import User
+from src.app.db.models.post import Post
+from src.app.db.models.category import Category, PostCategoryAssociation
 from src.app.db.base import Base
 
 # this is the Alembic Config object, which provides
