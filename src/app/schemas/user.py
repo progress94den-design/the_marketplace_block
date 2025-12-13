@@ -1,6 +1,7 @@
-from pydantic import BaseModel, EmailStr, field_validator
 import re
 import uuid
+
+from pydantic import BaseModel, EmailStr, field_validator
 
 PHONE_PATTERN = re.compile(r"^\+7\(\d{3}\)\d{7}$")
 

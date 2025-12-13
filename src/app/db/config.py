@@ -1,10 +1,7 @@
-import sys
 from pathlib import Path
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parents[3]
-
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from sqlalchemy.dialects.postgresql import psycopg2
 
 
 class Settings(BaseSettings):

@@ -16,5 +16,4 @@ class User(Base):
     name = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True)
 
-    # post_id = Column(UUID(as_uuid=True), ForeignKey("post.post_id"), nullable=False)
     posts = relationship("Post", back_populates="user", cascade="all, delete-orphan")
