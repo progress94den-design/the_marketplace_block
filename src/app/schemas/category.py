@@ -1,7 +1,7 @@
-from uuid import UUID
+import uuid
 from pydantic import BaseModel
 
 
 class ShowCategory(BaseModel):
-    category_id: UUID
+    category_id: uuid.UUID
     name: str

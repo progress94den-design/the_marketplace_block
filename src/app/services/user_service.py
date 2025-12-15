@@ -45,7 +45,6 @@ class UserService:
 
         db_session.add(new_user)
         await db_session.commit()
-        await db_session.refresh(new_user)
 
         # await send_registration_email(
         #     email=new_user.email,

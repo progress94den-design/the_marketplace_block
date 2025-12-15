@@ -10,5 +10,5 @@ categories_router = APIRouter()
 
 
 @categories_router.get("/", response_model=list[ShowCategory])
-async def get_users(db_session: AsyncSession = Depends(get_async_session)):
+async def get_categories(db_session: AsyncSession = Depends(get_async_session)):
     return await CategoryService.get_all_categories(db_session)

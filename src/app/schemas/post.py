@@ -11,8 +11,15 @@ class ShowPost(BaseModel):
     post_id: uuid.UUID
     title: str
     content: str
-    image: str | None # например путь к файлу
+    image: str | None  # например путь к файлу
     created_at: datetime
     updated_at: datetime
     user: ShowUser
     categories: list[ShowCategory]
+
+
+class PostCreate(BaseModel):
+    title: str
+    content: str
+    image: str | None
+    category_ids: list[uuid.UUID]  = []

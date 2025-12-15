@@ -3,8 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.app.schemas.user import UserLogin, ShowUser
 from src.app.services.auth_service import AuthService
+from src.app.db.models.user import User
 from src.app.db.session import get_async_session
-from src.app.core.jwt import get_current_user_id
+from src.app.core.jwt import get_current_user
 
 auth_router = APIRouter()
 
@@ -15,15 +16,10 @@ async def login(data: UserLogin, response: Response, db_session: AsyncSession = 
 
 
 @auth_router.get("/me")
-async def me(user_id: str = Depends(get_current_user_id)):
-    return {"user_id": user_id}
+async def me(user: User = Depends(get_current_user)):
+    return user
 
 
 @auth_router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(response: Response):
-    response.delete_cookie(
-        key="access_token",
-        httponly=True,
-        secure=False,     # True в prod
-        samesite="lax",
-    )
+    return await AuthService.logout(response)

@@ -11,9 +11,9 @@ user_router = APIRouter()
 
 @user_router.post("/", response_model=ShowUser)
 async def create_user(user_data: UserCreate, db_session: AsyncSession = Depends(get_async_session)):
-    return await UserService.create_user(user_data, db_session)
+    return await UserService.create_user(data=user_data, db_session=db_session)
 
 
 @user_router.get("/", response_model=list[ShowUser])
 async def get_users(db_session: AsyncSession = Depends(get_async_session)):
-    return await UserService.get_all_users(db_session)
+    return await UserService.get_all_users(db_session=db_session)

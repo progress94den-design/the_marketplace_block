@@ -50,4 +50,13 @@ class AuthService:
             name=user.name,
             is_active=user.is_active,
         )
-        # return access_token
+
+    @staticmethod
+    async def logout(response: Response):
+        response.delete_cookie(
+            key="access_token",
+            httponly=True,
+            secure=False,  # True в prod
+            samesite="lax",
+        )
+        return {"message": "Logged out"}
