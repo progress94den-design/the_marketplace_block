@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from src.app.db.session import get_async_session
-
 from src.app.db.models.user import User
 
 SECRET_KEY = "super-secret-key"

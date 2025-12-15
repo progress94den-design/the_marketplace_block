@@ -2,6 +2,7 @@ import uuid
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Annotated
 
 from src.app.schemas.post import ShowPost, PostCreate, PostUpdate
 from src.app.services.posts_service import PostService
@@ -19,7 +20,7 @@ async def get_posts(db_session: AsyncSession = Depends(get_async_session)):
 
 @posts_router.post("/", response_model=ShowPost)
 async def create_post(
-        data: PostCreate,
+        data: Annotated[PostCreate, Depends()],
         current_user: User = Depends(get_current_user),
         db_session: AsyncSession = Depends(get_async_session)
 ):
@@ -29,7 +30,7 @@ async def create_post(
 @posts_router.put("/{post_id}", response_model=ShowPost)
 async def update_post(
         post_id: uuid.UUID,
-        data: PostUpdate,
+        data: Annotated[PostUpdate, Depends()],
         current_user: User = Depends(get_current_user),
         db_session: AsyncSession = Depends(get_async_session),
 ):
