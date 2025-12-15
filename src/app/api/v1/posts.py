@@ -34,3 +34,12 @@ async def update_post(
         db_session: AsyncSession = Depends(get_async_session),
 ):
     return await PostService.update_post(post_id=post_id, data=data, user=current_user, db_session=db_session)
+
+
+@posts_router.delete("/{post_id}")
+async def delete_post(
+        post_id: uuid.UUID,
+        current_user: User = Depends(get_current_user),
+        db_session: AsyncSession = Depends(get_async_session),
+):
+    return await PostService.delete_post(post_id=post_id, user=current_user, db_session=db_session)

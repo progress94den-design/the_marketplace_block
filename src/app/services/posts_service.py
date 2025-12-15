@@ -116,3 +116,24 @@ class PostService:
         await db_session.commit()
 
         return PostService._to_show_post(post=post, user=user, categories=categories)
+
+    @staticmethod
+    async def delete_post(post_id: uuid.UUID, user: User, db_session: AsyncSession):
+        result = await db_session.execute(select(Post).where(Post.post_id == post_id))
+        post = result.scalar_one_or_none()
+
+        if not post:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+        if post.user_id != user.user_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not the author of this post")
+
+        await db_session.execute(
+            delete(PostCategoryAssociation).where(
+                PostCategoryAssociation.post_id == post.post_id
+            )
+        )
+
+        await db_session.delete(post)
+        await db_session.commit()
+
+        return {"detail": "Post deleted successfully"}
