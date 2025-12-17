@@ -1,4 +1,5 @@
 import uuid
+from http.client import HTTPResponse
 
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -50,7 +51,7 @@ class PostService:
         categories = result.scalars().all()
 
         if len(categories) != len(set(category_ids)):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="One or more categories not found")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="One or more categories not found")
 
         for category in categories:
             db_session.add(
@@ -70,6 +71,20 @@ class PostService:
                 selectinload(Post.user),
                 selectinload(Post.categories),
             )
+        )
+        result = await db_session.execute(stmt)
+        return result.scalars().all()
+
+    @staticmethod
+    async def get_posts_paginated(skip: int, limit: int, db_session: AsyncSession):
+        stmt = (
+            select(Post)
+            .options(
+                selectinload(Post.user),
+                selectinload(Post.categories),
+            )
+            .offset(skip)
+            .limit(limit)
         )
         result = await db_session.execute(stmt)
         return result.scalars().all()

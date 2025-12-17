@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Annotated
 
@@ -12,10 +12,15 @@ from src.app.core.jwt import get_current_user
 
 posts_router = APIRouter()
 
+MAX_LIMIT = 10
+
 
 @posts_router.get("/", response_model=list[ShowPost])
-async def get_posts(db_session: AsyncSession = Depends(get_async_session)):
-    return await PostService.get_all_posts(db_session)
+async def get_posts(skip: int = 0,
+                    limit: int = Query(5, le=MAX_LIMIT),
+                    db_session: AsyncSession = Depends(get_async_session)
+):
+    return await PostService.get_posts_paginated(skip=skip, limit=limit, db_session=db_session)
 
 
 @posts_router.post("/", response_model=ShowPost)
