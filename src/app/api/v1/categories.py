@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Annotated
+from typing import Annotated, List
 
 from src.app.db.session import get_async_session
 from src.app.core.jwt import get_current_user
@@ -13,7 +13,7 @@ from src.app.services.categoreis_service import CategoryService
 categories_router = APIRouter()
 
 
-@categories_router.get("/", response_model=list[ShowCategory])
+@categories_router.get("/", response_model=List[ShowCategory])
 async def get_categories(db_session: AsyncSession = Depends(get_async_session)):
     return await CategoryService.get_all_categories(db_session)
 

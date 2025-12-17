@@ -1,7 +1,7 @@
 import re
 import uuid
 
-from pydantic import BaseModel, EmailStr, field_validator, Field
+from pydantic import BaseModel, EmailStr, field_validator
 
 PHONE_PATTERN = re.compile(r"^\+7\(\d{3}\)\d{7}$")
 
@@ -28,6 +28,7 @@ class UserCreate(BaseModel):
     name: str
 
     @field_validator("phone_number")
+    @classmethod
     def validate_phone_number(cls, values):
         if not re.match(PHONE_PATTERN, values):
             raise ValueError("Invalid phone number. The phone number must be in the format +7(999)1234567")

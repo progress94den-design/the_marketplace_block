@@ -1,7 +1,7 @@
 import uuid
-from http.client import HTTPResponse
+from typing import List
 
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from fastapi import HTTPException, status, UploadFile
@@ -9,7 +9,7 @@ from fastapi import HTTPException, status, UploadFile
 from src.app.db.models.post import Post
 from src.app.db.models.user import User
 from src.app.db.models.category import Category, PostCategoryAssociation
-from src.app.schemas.post import PostCreate, ShowPost, PostUpdate
+from src.app.schemas.post import PostCreate, ShowPost, PostUpdate, PostQueryParams
 from src.app.schemas.user import ShowUser
 from src.app.schemas.category import ShowCategory
 from src.app.core.images import upload_post_image, delete_image, generate_presigned_url
@@ -17,7 +17,7 @@ from src.app.core.images import upload_post_image, delete_image, generate_presig
 
 class PostService:
     @staticmethod
-    def _to_show_post(post: Post, user: User, categories: list[Category]):
+    def _to_show_post(post: Post, user: User, categories: List[Category]):
         image_url = generate_presigned_url(post.image) if post.image else None
         return ShowPost(
             post_id=post.post_id,
@@ -43,7 +43,7 @@ class PostService:
         )
 
     @staticmethod
-    async def _get_post_categories_and_associate(post: Post, category_ids: list[uuid.UUID], db_session: AsyncSession):
+    async def _get_post_categories_and_associate(post: Post, category_ids: List[uuid.UUID], db_session: AsyncSession):
         if not category_ids:
             return []
 
@@ -76,18 +76,30 @@ class PostService:
         return result.scalars().all()
 
     @staticmethod
-    async def get_posts_paginated(skip: int, limit: int, db_session: AsyncSession):
-        stmt = (
-            select(Post)
-            .options(
-                selectinload(Post.user),
-                selectinload(Post.categories),
-            )
-            .offset(skip)
-            .limit(limit)
+    async def get_posts_params(params: PostQueryParams, db_session: AsyncSession):
+        stmt = select(Post).options(
+            selectinload(Post.user),
+            selectinload(Post.categories)
         )
+
+        conditions = []
+        if params.search:
+            ts_vector = func.to_tsvector('russian', Post.title + ' ' + Post.content)
+            ts_query = func.plainto_tsquery('russian', params.search)
+            conditions.append(ts_vector.op('@@')(ts_query))
+        if params.category_ids:
+            stmt = stmt.join(PostCategoryAssociation, Post.post_id == PostCategoryAssociation.post_id)
+            conditions.append(PostCategoryAssociation.category_id.in_(params.category_ids))
+        if conditions:
+            stmt = stmt.where(and_(*conditions))
+
+        stmt = stmt.offset(params.skip).limit(params.page_size)
         result = await db_session.execute(stmt)
-        return result.scalars().all()
+        posts = result.scalars().unique().all()
+        return [
+            PostService._to_show_post(post=post, user=post.user, categories=post.categories)
+            for post in posts
+        ]
 
     @staticmethod
     async def create_post(data: PostCreate, user: User, db_session: AsyncSession, image: UploadFile | None = None):
@@ -132,7 +144,7 @@ class PostService:
                 delete_image(post.image)
             post.image = await upload_post_image(image, post.post_id)
 
-        categories: list[Category] = []
+        categories: List[Category] = []
         if data.category_ids is not None:
             await db_session.execute(
                 delete(PostCategoryAssociation).where(
