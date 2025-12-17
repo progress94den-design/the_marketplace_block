@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Annotated
 
@@ -22,9 +22,10 @@ async def get_posts(db_session: AsyncSession = Depends(get_async_session)):
 async def create_post(
         data: Annotated[PostCreate, Depends()],
         current_user: User = Depends(get_current_user),
-        db_session: AsyncSession = Depends(get_async_session)
+        db_session: AsyncSession = Depends(get_async_session),
+        image: UploadFile | None = File(None),
 ):
-    return await PostService.create_post(data=data, user=current_user, db_session=db_session)
+    return await PostService.create_post(data=data, user=current_user, db_session=db_session, image=image)
 
 
 @posts_router.put("/{post_id}", response_model=ShowPost)
@@ -33,8 +34,11 @@ async def update_post(
         data: Annotated[PostUpdate, Depends()],
         current_user: User = Depends(get_current_user),
         db_session: AsyncSession = Depends(get_async_session),
+        image: UploadFile | None = File(None),
 ):
-    return await PostService.update_post(post_id=post_id, data=data, user=current_user, db_session=db_session)
+    return await PostService.update_post(
+        post_id=post_id, data=data, user=current_user, db_session=db_session, image=image
+    )
 
 
 @posts_router.delete("/{post_id}")

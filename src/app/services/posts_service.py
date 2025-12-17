@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 
 from src.app.db.models.post import Post
 from src.app.db.models.user import User
@@ -11,16 +11,18 @@ from src.app.db.models.category import Category, PostCategoryAssociation
 from src.app.schemas.post import PostCreate, ShowPost, PostUpdate
 from src.app.schemas.user import ShowUser
 from src.app.schemas.category import ShowCategory
+from src.app.core.images import upload_post_image, delete_image, generate_presigned_url
 
 
 class PostService:
     @staticmethod
     def _to_show_post(post: Post, user: User, categories: list[Category]):
+        image_url = generate_presigned_url(post.image) if post.image else None
         return ShowPost(
             post_id=post.post_id,
             title=post.title,
             content=post.content,
-            image=post.image,
+            image=image_url,
             created_at=post.created_at,
             updated_at=post.updated_at,
             user=ShowUser(
@@ -44,9 +46,11 @@ class PostService:
         if not category_ids:
             return []
 
-        stmt = select(Category).where(Category.category_id.in_(category_ids))
-        result = await db_session.execute(stmt)
+        result = await db_session.execute(select(Category).where(Category.category_id.in_(category_ids)))
         categories = result.scalars().all()
+
+        if len(categories) != len(set(category_ids)):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="One or more categories not found")
 
         for category in categories:
             db_session.add(
@@ -71,11 +75,14 @@ class PostService:
         return result.scalars().all()
 
     @staticmethod
-    async def create_post(data: PostCreate, user: User, db_session: AsyncSession):
-        post = Post(title=data.title, content=data.content, image=data.image, user_id=user.user_id, )
+    async def create_post(data: PostCreate, user: User, db_session: AsyncSession, image: UploadFile | None = None):
+        post = Post(title=data.title, content=data.content, user_id=user.user_id)
 
         db_session.add(post)
         await db_session.flush()
+
+        if image:
+            post.image = await upload_post_image(image, post.post_id)
 
         categories = await PostService._get_post_categories_and_associate(
             post=post, category_ids=data.category_ids, db_session=db_session
@@ -86,7 +93,13 @@ class PostService:
         return PostService._to_show_post(post=post, user=user, categories=categories)
 
     @staticmethod
-    async def update_post(post_id: uuid.UUID, data: PostUpdate, user: User, db_session: AsyncSession):
+    async def update_post(
+            post_id: uuid.UUID,
+            data: PostUpdate,
+            user: User,
+            db_session: AsyncSession,
+            image: UploadFile | None = None,
+    ):
         result = await db_session.execute(select(Post).where(Post.post_id == post_id))
         post = result.scalar_one_or_none()
 
@@ -99,8 +112,10 @@ class PostService:
             post.title = data.title
         if data.content is not None:
             post.content = data.content
-        if data.image is not None:
-            post.image = data.image
+        if image is not None:
+            if post.image:
+                delete_image(post.image)
+            post.image = await upload_post_image(image, post.post_id)
 
         categories: list[Category] = []
         if data.category_ids is not None:
@@ -127,6 +142,9 @@ class PostService:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
         if post.user_id != user.user_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not the author of this post")
+
+        if post.image:
+            delete_image(post.image)
 
         await db_session.execute(
             delete(PostCategoryAssociation).where(

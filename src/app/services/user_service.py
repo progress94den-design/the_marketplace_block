@@ -37,7 +37,6 @@ class UserService:
 
         new_user = User(
             email=data.email,
-            # hashed_password=Hasher.get_password_hash(data.password),
             hashed_password=data.password,
             phone_number=data.phone_number,
             name=data.name

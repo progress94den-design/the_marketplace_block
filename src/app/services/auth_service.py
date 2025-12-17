@@ -24,7 +24,6 @@ class AuthService:
                 detail="Invalid email or password",
             )
 
-        # if not Hasher.verify_password(data.password, user.hashed_password):
         if data.password != user.hashed_password:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

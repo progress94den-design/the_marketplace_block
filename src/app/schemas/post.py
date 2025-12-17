@@ -22,12 +22,10 @@ class ShowPost(BaseModel):
 class PostCreate(BaseModel):
     title: str
     content: str
-    image: str | None
     category_ids: list[uuid.UUID] = []
 
 
 class PostUpdate(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
-    image: Optional[str] = None
     category_ids: Optional[list[uuid.UUID]] = None

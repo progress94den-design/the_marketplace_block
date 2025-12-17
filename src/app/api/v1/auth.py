@@ -1,3 +1,4 @@
+from typing import Annotated
 from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,7 +12,10 @@ auth_router = APIRouter()
 
 
 @auth_router.post("/", response_model=ShowUser)
-async def login(data: UserLogin, response: Response, db_session: AsyncSession = Depends(get_async_session)):
+async def login(data: Annotated[UserLogin, Depends()],
+                response: Response,
+                db_session: AsyncSession = Depends(get_async_session),
+):
     return await AuthService.login(data, db_session, response)
 
 
